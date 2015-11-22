@@ -1,0 +1,150 @@
+<?php
+
+/**
+ * @file
+ * Module file for main_movie.
+ */
+
+/**
+ * Implements hook_block_info().
+ */
+function main_movie_block_info() {
+
+  $block = array();
+
+  $block['candidate_results'] = array(
+    'info' => t('Candidate Results'),
+  );
+
+  $block['fda_results'] = array(
+    'info' => t('FDA Results'),
+  );
+
+  return $block;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function main_movie_block_view($block_key) {
+
+  switch ($block_key) {
+    case 'candidate_results':
+      $block['subject'] = 'Candidate Results';
+      $block['content'] = main_movie_poli_json();
+      break;
+
+    case 'fda_results':
+      $block['subject'] = 'Candidate Results';
+      $block['content'] = drupal_get_form('main_movie_form');
+      break;
+
+    default: '';
+  }
+
+  return $block;
+}
+
+/**
+ * Implements hook_form().
+ */
+function main_movie_form($form, &$form_state) {
+  $form['#prefix'] = '<div id="main_movie_results">';
+  $form['#suffix'] = '</div>';
+  $form['device_name_text'] = array(
+    '#type' => 'textfield',
+    '#required' => TRUE,
+    '#title' => 'Device Name'
+  );
+  $form['device_name_type'] = array(
+    '#type' => 'select',
+    '#title' => 'Search By',
+    '#options' => array('generic_name' => 'Generic name', 'brand_name' => 'Brand name'),
+  );
+    $form['device_outcome'] = array(
+    '#type' => 'select',
+    '#title' => 'Outcome',
+    '#options' => array('Death' => 'Death', 'Injury' => 'Injury'),
+  );
+  $form['device_name_number'] = array(
+    '#type' => 'textfield',
+    '#required' => TRUE,
+    '#size' => 5,
+    '#title' => 'Number of Results to Return'
+  );
+  $form['submit_button'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+    '#ajax' => array(
+      'callback' => 'main_movie_form_submit',
+      'wrapper' => 'main_movie_results',
+      ),
+  );
+  $form['#submit'][] = 'main_movie_form_submit';
+  return $form;
+}
+
+/**
+ * Grabs fda data.
+ */
+function main_movie_form_submit(&$form, &$form_state) {
+  $name = strtolower(str_replace(' ', '+', $form_state['values']['device_name_text']));
+  $name_type = $form_state['values']['device_name_type'];
+  $number = $form_state['values']['device_name_number'];
+  $outcome = $form_state['values']['device_outcome'];
+  /**
+   * Some samples:
+   * https://api.fda.gov/device/event.json?search=device.generic_name:x-ray+AND+adverse_event_flag=Y
+   * https://api.fda.gov/device/event.json?search=device.generic_name:"x-ray"+AND+adverse_event_flag=Y+AND+patient.sequence_number_outcome=Death
+   * https://api.fda.gov/device/event.json?search=device.' . $name_type . ':' . $name  . '&limit=' . $number
+   * https://api.fda.gov/device/event.json?search=device.generic_name:"pacemaker"+AND+adverse_event_flag=Y+AND+patient.sequence_number_outcome=Death
+   */
+  $request = drupal_http_request('https://api.fda.gov/device/event.json?search=device.' . $name_type . ':' . $name  . '+AND+adverse_event_flag=Y+AND+patient.sequence_number_outcome=' . $outcome . '&limit=' . $number);
+  $json = drupal_json_decode($request->data);
+  //dpm($json);
+  $output = '<br /><br />';
+  foreach ($json['results'] as $result) {
+
+    $output .= '<span style="font-weight:bold;">Event type: </span><span>' . $result['event_type'] . '</span><br />';
+    $output .= '<span style="font-weight:bold;">Event location: </span><span>' . $result['event_location'] . '</span><br />';
+    $output .= '<span style="font-weight:bold;">Date of event: </span><span>' . $result['date_of_event'] . '</span><br />';
+    $output .= '<span style="font-weight:bold;">Brand name: </span><span>' . $result['device'][0]['brand_name'] . '</span><br />';
+    $output .= '<span style="font-weight:bold;">Generic name: </span><span>' . $result['device'][0]['generic_name'] . '</span><br />';
+
+    foreach ($result['mdr_text'] as $mdr_text) {
+      $output .= '<span style="font-weight:bold;">' . $mdr_text['text_type_code'] . ': </span><span>' . $mdr_text['text'] . '</span><br />';
+    }
+
+    $output .= '<span style="font-weight:bold;">Manufacturer name: </span><span>' . $result['device'][0]['manufacturer_d_name'] . '</span><br />';
+    $output .= '<span style="font-weight:bold;">Manufacturer Address: </span><span>' . $result['manufacturer_contact_address_1'];
+    $output .= ', ' . $result['manufacturer_g1_city'];
+    $output .= ' ' . $result['manufacturer_contact_state'];
+    $output .= ' ' . $result['manufacturer_contact_area_code'] . '<span><br />';
+    $output .= '<span style="font-weight:bold;">Manufacturer Phone: </span><span>' . $result['manufacturer_contact_plocal'] . '<br />';
+    $output .= '<hr />';
+  }
+  $form['#markup'] = $output;
+
+  if (!empty($form_state['executed'])) {
+    $form['result'] = array(
+      '#markup' => $output,
+    );
+    return $form;
+  }
+  else {
+    $form['result'] = array(
+      '#markup' => 'Error!',
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Grabs politifact data.
+ */
+function main_movie_poli_json() {
+  $request = drupal_http_request('http://www.politifact.com/api/updates/truth-o-meter/json');
+  $json = drupal_json_decode($request->data);
+  //dpm($json);
+}
