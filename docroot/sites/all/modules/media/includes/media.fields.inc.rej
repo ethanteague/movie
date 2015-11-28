@@ -1,0 +1,16 @@
+***************
+*** 113,118 ****
+          'file_extensions' => isset($field_settings['file_extensions']) ? $field_settings['file_extensions'] : variable_get('file_entity_default_allowed_extensions', 'jpg jpeg gif png txt doc docx xls xlsx pdf ppt pptx pps ppsx odt ods odp mp3 mov mp4 m4a m4v mpeg avi ogg oga ogv weba webp webm'),
+          'max_filesize' => isset($field_settings['max_filesize']) ? $field_settings['max_filesize'] : 0,
+          'uri_scheme' => !empty($field['settings']['uri_scheme']) ? $field['settings']['uri_scheme'] : file_default_scheme(),
+        ),
+      ),
+      // Allows this field to return an array instead of a single value.
+--- 113,119 ----
+          'file_extensions' => isset($field_settings['file_extensions']) ? $field_settings['file_extensions'] : variable_get('file_entity_default_allowed_extensions', 'jpg jpeg gif png txt doc docx xls xlsx pdf ppt pptx pps ppsx odt ods odp mp3 mov mp4 m4a m4v mpeg avi ogg oga ogv weba webp webm'),
+          'max_filesize' => isset($field_settings['max_filesize']) ? $field_settings['max_filesize'] : 0,
+          'uri_scheme' => !empty($field['settings']['uri_scheme']) ? $field['settings']['uri_scheme'] : file_default_scheme(),
++         'field' => $field['field_name'],
+        ),
+      ),
+      // Allows this field to return an array instead of a single value.
