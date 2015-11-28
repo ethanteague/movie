@@ -1,0 +1,47 @@
+diff --git a/includes/file.inc b/includes/file.inc
+index d3ac87e..e5f27de 100644
+--- a/includes/file.inc
++++ b/includes/file.inc
+@@ -275,6 +275,7 @@ function file_default_scheme() {
+ function file_stream_wrapper_uri_normalize($uri) {
+   $scheme = file_uri_scheme($uri);
+ 
++  $target = NULL;
+   if ($scheme && file_stream_wrapper_valid_scheme($scheme)) {
+     $target = file_uri_target($uri);
+ 
+@@ -282,6 +283,7 @@ function file_stream_wrapper_uri_normalize($uri) {
+       $uri = $scheme . '://' . $target;
+     }
+   }
++  drupal_alter('file_stream_wrapper_uri_normalize', $uri, $scheme, $target);
+   return $uri;
+ }
+ 
+diff --git a/modules/system/system.api.php b/modules/system/system.api.php
+index 164647b..c466877 100644
+--- a/modules/system/system.api.php
++++ b/modules/system/system.api.php
+@@ -3071,6 +3071,22 @@ function hook_file_url_alter(&$uri) {
+ }
+ 
+ /**
++ * Alter a normalized URI for a given stream wrapper.
++ *
++ * @see file_stream_wrapper_uri_normalize()
++ *
++ * @param string &$uri
++ *   The URI to alter.
++ * @param string $scheme
++ *   The scheme of the URI, such as 'public' or 'http'.
++ * @param string $target
++ *   The path component of the URI.
++ */
++function hook_file_stream_wrapper_uri_normalize_alter(&$uri, $scheme, $target) {
++
++}
++
++/**
+  * Check installation requirements and do status reporting.
+  *
+  * This hook has three closely related uses, determined by the $phase argument:
