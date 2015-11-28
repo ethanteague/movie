@@ -20,6 +20,10 @@ function main_movie_block_info() {
     'info' => t('FDA Results'),
   );
 
+  $block['movie_upload'] = array(
+    'info' => t('Movie Upload'),
+  );
+
   return $block;
 }
 
@@ -37,6 +41,11 @@ function main_movie_block_view($block_key) {
     case 'fda_results':
       $block['subject'] = 'Candidate Results';
       $block['content'] = drupal_get_form('main_movie_form');
+      break;
+
+    case 'movie_upload':
+      $block['subject'] = 'Upload Video';
+      $block['content'] = main_movie_vimeo();
       break;
 
     default: '';
@@ -146,5 +155,15 @@ function main_movie_form_submit(&$form, &$form_state) {
 function main_movie_poli_json() {
   $request = drupal_http_request('http://www.politifact.com/api/updates/truth-o-meter/json');
   $json = drupal_json_decode($request->data);
+  //dpm($json);
+}
+
+
+/**
+ * Upload to vimeo.
+ */
+function main_movie_vimeo() {
+  // drupal_add_js(libraries_get_path('vimeo') . '/upload.js');
+  //drupal_add_js(drupal_get_path('module', 'main_movie') . '/includes/js/vimeo_connect.js');
   //dpm($json);
 }
